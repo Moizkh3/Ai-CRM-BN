@@ -22,7 +22,8 @@ const errorHandler = (err, req, res, _next) => {
     return res.status(400).json({ success: false, message: "Invalid resource ID" });
   }
 
-  res.status(status).json({ success: false, message });
+  console.error("❌ Error caught:", err);
+  res.status(status).json({ success: false, message, error: err.toString() });
 };
 
 export default errorHandler;

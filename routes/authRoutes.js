@@ -6,7 +6,7 @@ import protect from "../middleware/auth.js";
 const router = express.Router();
 
 const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+  jwt.sign({ id }, process.env.JWT_SECRET || "ai_crm_default_secret_key_2026", { expiresIn: "30d" });
 
 // POST /api/auth/register
 router.post("/register", async (req, res, next) => {
