@@ -15,7 +15,8 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || "ai_crm_default_secret_key_2026";
+    const decoded = jwt.verify(token, secret);
     req.user = await User.findById(decoded.id).select("-password");
     if (!req.user) {
       return res.status(401).json({ success: false, message: "User not found" });
