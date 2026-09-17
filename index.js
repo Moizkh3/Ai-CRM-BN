@@ -28,22 +28,27 @@ app.use(helmet());
 // Configure flexible CORS for development and production
 const allowedOrigins = [
   process.env.CLIENT_ORIGIN,
+  "https://ai-crm-fe.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .map((url) => url.replace(/\/$/, ""));
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like Postman, mobile apps, or curl)
       if (!origin) return callback(null, true);
-      
-      // Allow allowedOrigins or any localhost/127.0.0.1 port in development
+
+      const cleanOrigin = origin.replace(/\/$/, "");
+
       if (
-        allowedOrigins.includes(origin) ||
-        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.endsWith(".vercel.app") ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)
       ) {
         return callback(null, true);
       }
