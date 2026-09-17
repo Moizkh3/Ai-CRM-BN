@@ -7,6 +7,9 @@ try {
   // Ignore if DNS override is disallowed by environment
 }
 
+// Disable Mongoose query buffering globally so disconnected queries fail fast
+mongoose.set("bufferCommands", false);
+
 let isConnected = false;
 
 const connectDB = async () => {
