@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
 import morgan from "morgan";
 import connectDB from "./db.js";
 
@@ -20,45 +19,26 @@ import errorHandler from "./middleware/errorHandler.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
+// Universal CORS Middleware - Allow all origins & methods (Ideal for personal projects)
+app.use(cors({ origin: "*", credentials: false }));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  next();
+});
 
-// Security & utilities
-app.use(helmet());
-// Configure flexible CORS for development and production
-const allowedOrigins = [
-  process.env.CLIENT_ORIGIN,
-  "https://ai-crm-fe.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:5174",
-]
-  .filter(Boolean)
-  .map((url) => url.replace(/\/$/, ""));
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like Postman, mobile apps, or curl)
-      if (!origin) return callback(null, true);
-
-      const cleanOrigin = origin.replace(/\/$/, "");
-
-      if (
-        allowedOrigins.includes(cleanOrigin) ||
-        cleanOrigin.endsWith(".vercel.app") ||
-        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)
-      ) {
-        return callback(null, true);
-      }
-      return callback(new Error("CORS policy violation"), false);
-    },
-    credentials: true,
-  })
-);
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+
+// Ensure DB connection on incoming request
+app.use(async (_req, _res, next) => {
+  await connectDB();
+  next();
+});
 
 // ── API Routes ─────────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
@@ -82,8 +62,10 @@ app.use((_req, res) =>
 // Global error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`   Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`   Gemini AI:   ${process.env.GEMINI_API_KEY ? "✅ configured" : "⚠️  not set (mock mode)"}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
